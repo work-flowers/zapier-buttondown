@@ -1,0 +1,27 @@
+{
+  "name": "zapier-buttondown",
+  "version": "1.0.0",
+  "description": "Custom Zapier integration for Buttondown email marketing",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest --testTimeout 10000"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/work-flowers/zapier-buttondown.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/work-flowers/zapier-buttondown/issues"
+  },
+  "homepage": "https://github.com/work-flowers/zapier-buttondown#readme",
+  "dependencies": {
+    "zapier-platform-core": "18.4.0"
+  },
+  "devDependencies": {
+    "jest": "^30.3.0"
+  }
+}
