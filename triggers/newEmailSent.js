@@ -1,4 +1,16 @@
+const { performSubscribe, performUnsubscribe } = require('./webhookHelpers');
+
 const perform = async (z, bundle) => {
+  const payload = bundle.cleanedRequest;
+  const emailId = payload.data.email || payload.data.id;
+
+  const response = await z.request({
+    url: `https://api.buttondown.com/v1/emails/${emailId}`,
+  });
+  return [response.data];
+};
+
+const performList = async (z, bundle) => {
   const response = await z.request({
     url: 'https://api.buttondown.com/v1/emails',
     params: {
@@ -15,10 +27,14 @@ module.exports = {
   noun: 'Email',
   display: {
     label: 'New Email Sent',
-    description: 'Triggers when a new email is sent to subscribers.',
+    description: 'Triggers instantly when a new email is sent to subscribers.',
   },
   operation: {
+    type: 'hook',
+    performSubscribe: performSubscribe(['email.sent']),
+    performUnsubscribe,
     perform,
+    performList,
     sample: {
       id: 'email_00000000-0000-0000-0000-000000000000',
       subject: 'My Newsletter Issue #1',

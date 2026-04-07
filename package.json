@@ -19,6 +19,7 @@
   },
   "homepage": "https://github.com/work-flowers/zapier-buttondown#readme",
   "dependencies": {
+    "form-data": "^4.0.5",
     "zapier-platform-core": "18.4.0"
   },
   "devDependencies": {

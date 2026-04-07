@@ -1,10 +1,42 @@
+const uploadImage = async (z, imageUrl) => {
+  const downloadResponse = await z.request({
+    url: imageUrl,
+    raw: true,
+  });
+  const buffer = await downloadResponse.buffer();
+
+  const filename =
+    imageUrl.split('/').pop().split('?')[0] || 'image.jpg';
+  const FormData = require('form-data');
+  const form = new FormData();
+  form.append('image', buffer, { filename });
+
+  const uploadResponse = await z.request({
+    url: 'https://api.buttondown.com/v1/images',
+    method: 'POST',
+    headers: form.getHeaders(),
+    body: form,
+  });
+  return uploadResponse.data.image;
+};
+
 const perform = async (z, bundle) => {
+  let emailBody = bundle.inputData.body;
+
+  if (bundle.inputData.image_url) {
+    const permanentUrl = await uploadImage(z, bundle.inputData.image_url);
+    emailBody = `![](${permanentUrl})\n\n${emailBody}`;
+  }
+
   const body = {
     subject: bundle.inputData.subject,
-    body: bundle.inputData.body,
-    status: 'draft',
+    body: emailBody,
+    status: bundle.inputData.publish_date ? 'scheduled' : 'draft',
   };
 
+  if (bundle.inputData.publish_date) {
+    body.publish_date = bundle.inputData.publish_date;
+  }
   if (bundle.inputData.description) {
     body.description = bundle.inputData.description;
   }
@@ -51,6 +83,22 @@ module.exports = {
         type: 'string',
         required: false,
         helpText: 'A short description for the archive/SEO.',
+      },
+      {
+        key: 'publish_date',
+        label: 'Send Date',
+        type: 'datetime',
+        required: false,
+        helpText:
+          'If provided, the email will be scheduled to send at this date/time instead of saved as a draft.',
+      },
+      {
+        key: 'image_url',
+        label: 'Image URL',
+        type: 'string',
+        required: false,
+        helpText:
+          'URL of an image to include at the end of the email body. The image will be downloaded and re-hosted on Buttondown so temporary URLs (e.g. pre-signed S3 links) will keep working.',
       },
       {
         key: 'slug',
