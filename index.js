@@ -1,7 +1,4 @@
 const authentication = require('./authentication');
-const newEmailSent = require('./triggers/newEmailSent');
-const newUnsubscribe = require('./triggers/newUnsubscribe');
-const newSubscriber = require('./triggers/newSubscriber');
 const findSubscriber = require('./searches/findSubscriber');
 const createDraft = require('./creates/createDraft');
 const createUpdateSubscriber = require('./creates/createUpdateSubscriber');
@@ -23,11 +20,7 @@ const App = {
 
   beforeRequest: [addAuthHeader],
 
-  triggers: {
-    [newEmailSent.key]: newEmailSent,
-    [newUnsubscribe.key]: newUnsubscribe,
-    [newSubscriber.key]: newSubscriber,
-  },
+  triggers: {},
 
   searches: {
     [findSubscriber.key]: findSubscriber,
