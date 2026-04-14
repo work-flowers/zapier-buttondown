@@ -1,15 +1,18 @@
-const uploadImage = async (z, imageUrl) => {
-  const downloadResponse = await z.request({
-    url: imageUrl,
-    raw: true,
-  });
-  const buffer = await downloadResponse.buffer();
-
-  const filename =
-    imageUrl.split('/').pop().split('?')[0] || 'image.jpg';
+const uploadImage = async (z, fileUrl) => {
   const FormData = require('form-data');
+
+  const fileResponse = await z.request({ url: fileUrl, raw: true });
+  const contentType =
+    fileResponse.headers.get('content-type') || 'image/jpeg';
+  const disposition = fileResponse.headers.get('content-disposition') || '';
+  const filenameMatch = disposition.match(/filename="?([^";\s]+)"?/);
+  const filename = filenameMatch ? filenameMatch[1] : 'image.jpg';
+
   const form = new FormData();
-  form.append('image', buffer, { filename });
+  form.append('image', fileResponse.body, {
+    filename,
+    contentType,
+  });
 
   const uploadResponse = await z.request({
     url: 'https://api.buttondown.com/v1/images',
@@ -94,11 +97,11 @@ module.exports = {
       },
       {
         key: 'image_url',
-        label: 'Image URL',
-        type: 'string',
+        label: 'Image',
+        type: 'file',
         required: false,
         helpText:
-          'URL of an image to include at the end of the email body. The image will be downloaded and re-hosted on Buttondown so temporary URLs (e.g. pre-signed S3 links) will keep working.',
+          'An image file to include at the top of the email body. The image will be re-hosted on Buttondown.',
       },
       {
         key: 'slug',
