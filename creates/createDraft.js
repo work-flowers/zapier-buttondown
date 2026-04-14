@@ -1,16 +1,16 @@
 const uploadImage = async (z, fileUrl) => {
   const FormData = require('form-data');
+  const fetch = require('node-fetch');
 
-  const fileResponse = await z.request({ url: fileUrl, raw: true });
+  // Use node-fetch directly to get a proper binary buffer
+  const fileResponse = await fetch(fileUrl);
+  const buffer = await fileResponse.buffer();
   const contentType =
     fileResponse.headers.get('content-type') || 'image/jpeg';
-  const disposition = fileResponse.headers.get('content-disposition') || '';
-  const filenameMatch = disposition.match(/filename="?([^";\s]+)"?/);
-  const filename = filenameMatch ? filenameMatch[1] : 'image.jpg';
 
   const form = new FormData();
-  form.append('image', fileResponse.body, {
-    filename,
+  form.append('image', buffer, {
+    filename: 'image.jpg',
     contentType,
   });
 
@@ -18,7 +18,7 @@ const uploadImage = async (z, fileUrl) => {
     url: 'https://api.buttondown.com/v1/images',
     method: 'POST',
     headers: form.getHeaders(),
-    body: form,
+    body: form.getBuffer(),
   });
   return uploadResponse.data.image;
 };
