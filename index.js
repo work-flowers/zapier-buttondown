@@ -2,6 +2,7 @@ const authentication = require('./authentication');
 const findSubscriber = require('./searches/findSubscriber');
 const createDraft = require('./creates/createDraft');
 const createUpdateSubscriber = require('./creates/createUpdateSubscriber');
+const newUnsubscribe = require('./triggers/newUnsubscribe');
 
 const addAuthHeader = (request, z, bundle) => {
   if (request.url.startsWith('https://api.buttondown.com/')) {
@@ -20,7 +21,9 @@ const App = {
 
   beforeRequest: [addAuthHeader],
 
-  triggers: {},
+  triggers: {
+    [newUnsubscribe.key]: newUnsubscribe,
+  },
 
   searches: {
     [findSubscriber.key]: findSubscriber,
