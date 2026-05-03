@@ -22,6 +22,25 @@ describe('creates', () => {
       expect(result.status).toBe('draft');
       expect(result.subject).toBe(bundle.inputData.subject);
     });
+
+    it('should rehost external markdown images', async () => {
+      const externalUrl =
+        'https://upload.wikimedia.org/wikipedia/commons/4/47/PNG_transparency_demonstration_1.png';
+      const bundle = {
+        authData: { api_key: process.env.API_KEY },
+        inputData: {
+          subject: `Test Image Rehost ${Date.now()}`,
+          body: `# Hello\n\n![alt text](${externalUrl})\n\nAnd again: ![](${externalUrl})\n`,
+        },
+      };
+      const result = await appTester(
+        App.creates.create_draft.operation.perform,
+        bundle
+      );
+      expect(result).toHaveProperty('id');
+      expect(result.body).not.toContain('upload.wikimedia.org');
+      expect(result.body).toMatch(/!\[alt text\]\(https?:\/\/[^)]+\)/);
+    }, 30000);
   });
 
   describe('create_update_subscriber', () => {

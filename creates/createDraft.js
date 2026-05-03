@@ -1,16 +1,44 @@
+const EXT_TO_CONTENT_TYPE = {
+  png: 'image/png',
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
+  gif: 'image/gif',
+  webp: 'image/webp',
+  svg: 'image/svg+xml',
+};
+
+const filenameFromUrl = (fileUrl) => {
+  try {
+    const pathname = new URL(fileUrl).pathname;
+    const last = pathname.split('/').filter(Boolean).pop() || 'image.jpg';
+    return /\.[a-z0-9]+$/i.test(last) ? last : `${last}.jpg`;
+  } catch (e) {
+    return 'image.jpg';
+  }
+};
+
 const uploadImage = async (z, fileUrl) => {
   const FormData = require('form-data');
   const fetch = require('node-fetch');
 
   // Use node-fetch directly to get a proper binary buffer
   const fileResponse = await fetch(fileUrl);
+  if (!fileResponse.ok) {
+    throw new Error(
+      `Failed to fetch image (${fileResponse.status}): ${fileUrl}`
+    );
+  }
   const buffer = await fileResponse.buffer();
+  const filename = filenameFromUrl(fileUrl);
+  const ext = (filename.split('.').pop() || '').toLowerCase();
   const contentType =
-    fileResponse.headers.get('content-type') || 'image/jpeg';
+    fileResponse.headers.get('content-type') ||
+    EXT_TO_CONTENT_TYPE[ext] ||
+    'image/jpeg';
 
   const form = new FormData();
   form.append('image', buffer, {
-    filename: 'image.jpg',
+    filename,
     contentType,
   });
 
@@ -23,8 +51,71 @@ const uploadImage = async (z, fileUrl) => {
   return uploadResponse.data.image;
 };
 
+const shouldRehost = (url) => {
+  try {
+    const { protocol, hostname } = new URL(url);
+    if (protocol !== 'http:' && protocol !== 'https:') return false;
+    if (hostname.endsWith('buttondown.com')) return false;
+    if (hostname.endsWith('buttondown.email')) return false;
+    return true;
+  } catch (e) {
+    return false;
+  }
+};
+
+const dedupeKey = (url) => {
+  try {
+    const u = new URL(url);
+    return `${u.protocol}//${u.host}${u.pathname}`;
+  } catch (e) {
+    return url;
+  }
+};
+
+const rehostMarkdownImages = async (z, markdown) => {
+  const imageRegex = /!\[([^\]]*)\]\(([^)\s]+)(?:\s+"[^"]*")?\)/g;
+  const matches = [...markdown.matchAll(imageRegex)];
+  const targets = matches
+    .map((m) => m[2])
+    .filter((url) => shouldRehost(url));
+  if (targets.length === 0) return markdown;
+
+  const unique = [...new Set(targets.map(dedupeKey))];
+  const keyToOriginal = new Map();
+  for (const url of targets) {
+    const key = dedupeKey(url);
+    if (!keyToOriginal.has(key)) keyToOriginal.set(key, url);
+  }
+
+  const uploads = await Promise.all(
+    unique.map(async (key) => {
+      const original = keyToOriginal.get(key);
+      try {
+        const permanent = await uploadImage(z, original);
+        return [key, permanent];
+      } catch (err) {
+        z.console.log(`Image rehost failed for ${key}: ${err.message}`);
+        return [key, null];
+      }
+    })
+  );
+  const keyToPermanent = new Map(uploads);
+
+  return markdown.replace(imageRegex, (full, alt, url, offset, str) => {
+    if (!shouldRehost(url)) return full;
+    const permanent = keyToPermanent.get(dedupeKey(url));
+    if (!permanent) return full;
+    // Preserve optional title segment if present
+    const titleMatch = full.match(/\s+"[^"]*"\)$/);
+    const title = titleMatch ? titleMatch[0].slice(0, -1) : '';
+    return `![${alt}](${permanent}${title})`;
+  });
+};
+
 const perform = async (z, bundle) => {
   let emailBody = bundle.inputData.body;
+
+  emailBody = await rehostMarkdownImages(z, emailBody);
 
   if (bundle.inputData.image_url) {
     const permanentUrl = await uploadImage(z, bundle.inputData.image_url);
@@ -78,7 +169,7 @@ module.exports = {
         type: 'text',
         required: true,
         helpText:
-          'The email body content. Supports both Markdown and HTML (auto-detected by Buttondown).',
+          'The email body content. Supports both Markdown and HTML (auto-detected by Buttondown). Markdown images (`![](url)`) pointing at external URLs are automatically re-hosted on Buttondown so they don\'t break when the source URL expires.',
       },
       {
         key: 'description',
