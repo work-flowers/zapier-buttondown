@@ -1,19 +1,19 @@
-const EXT_TO_CONTENT_TYPE = {
-  png: 'image/png',
-  jpg: 'image/jpeg',
-  jpeg: 'image/jpeg',
-  gif: 'image/gif',
-  webp: 'image/webp',
-  svg: 'image/svg+xml',
+const CONTENT_TYPE_TO_EXT = {
+  'image/png': 'png',
+  'image/jpeg': 'jpg',
+  'image/jpg': 'jpg',
+  'image/gif': 'gif',
+  'image/webp': 'webp',
+  'image/svg+xml': 'svg',
 };
 
-const filenameFromUrl = (fileUrl) => {
+const extFromUrl = (fileUrl) => {
   try {
     const pathname = new URL(fileUrl).pathname;
-    const last = pathname.split('/').filter(Boolean).pop() || 'image.jpg';
-    return /\.[a-z0-9]+$/i.test(last) ? last : `${last}.jpg`;
+    const match = pathname.match(/\.([a-z0-9]+)$/i);
+    return match ? match[1].toLowerCase() : null;
   } catch (e) {
-    return 'image.jpg';
+    return null;
   }
 };
 
@@ -29,12 +29,14 @@ const uploadImage = async (z, fileUrl) => {
     );
   }
   const buffer = await fileResponse.buffer();
-  const filename = filenameFromUrl(fileUrl);
-  const ext = (filename.split('.').pop() || '').toLowerCase();
-  const contentType =
-    fileResponse.headers.get('content-type') ||
-    EXT_TO_CONTENT_TYPE[ext] ||
-    'image/jpeg';
+  const headerType = (fileResponse.headers.get('content-type') || '')
+    .split(';')[0]
+    .trim()
+    .toLowerCase();
+  const ext =
+    CONTENT_TYPE_TO_EXT[headerType] || extFromUrl(fileUrl) || 'jpg';
+  const contentType = headerType || `image/${ext === 'jpg' ? 'jpeg' : ext}`;
+  const filename = `image.${ext}`;
 
   const form = new FormData();
   form.append('image', buffer, {
