@@ -47,7 +47,13 @@ const uploadImage = async (z, fileUrl) => {
     method: 'POST',
     headers: form.getHeaders(),
     body: form.getBuffer(),
+    skipThrowForStatus: true,
   });
+  if (uploadResponse.status >= 400) {
+    throw new Error(
+      `Buttondown image upload failed (${uploadResponse.status}) for ${fileUrl}: ${uploadResponse.content}`
+    );
+  }
   return uploadResponse.data.image;
 };
 
@@ -90,22 +96,16 @@ const rehostMarkdownImages = async (z, markdown) => {
   const uploads = await Promise.all(
     unique.map(async (key) => {
       const original = keyToOriginal.get(key);
-      try {
-        const permanent = await uploadImage(z, original);
-        return [key, permanent];
-      } catch (err) {
-        z.console.log(`Image rehost failed for ${key}: ${err.message}`);
-        return [key, null];
-      }
+      const permanent = await uploadImage(z, original);
+      return [key, permanent];
     })
   );
   const keyToPermanent = new Map(uploads);
 
-  return markdown.replace(imageRegex, (full, alt, url, offset, str) => {
+  return markdown.replace(imageRegex, (full, alt, url) => {
     if (!shouldRehost(url)) return full;
     const permanent = keyToPermanent.get(dedupeKey(url));
     if (!permanent) return full;
-    // Preserve optional title segment if present
     const titleMatch = full.match(/\s+"[^"]*"\)$/);
     const title = titleMatch ? titleMatch[0].slice(0, -1) : '';
     return `![${alt}](${permanent}${title})`;
