@@ -1,6 +1,6 @@
 {
   "name": "zapier-buttondown",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Custom Zapier integration for Buttondown email marketing",
   "main": "index.js",
   "scripts": {
