@@ -7,43 +7,22 @@ const perform = async (z, bundle) => {
       page: 1,
     },
   });
-  const emails = response.data.results || [];
-
-  let seen = {};
-  try {
-    const raw = await z.cursor.get();
-    if (raw) seen = JSON.parse(raw);
-  } catch (e) {
-    seen = {};
-  }
-
-  const events = [];
-  const next = {};
-  for (const e of emails) {
-    if (!e.publish_date) continue;
-    next[e.id] = e.publish_date;
-    const prior = seen[e.id];
-    if (prior && prior !== e.publish_date) {
-      events.push({
-        ...e,
-        email_id: e.id,
-        previous_publish_date: prior,
-        id: `${e.id}:${e.publish_date}`,
-      });
-    }
-  }
-
-  await z.cursor.set(JSON.stringify(next));
-  return events;
+  return (response.data.results || [])
+    .filter((e) => e.publish_date)
+    .map((e) => ({
+      ...e,
+      email_id: e.id,
+      id: `${e.id}:${e.publish_date}`,
+    }));
 };
 
 module.exports = {
   key: 'new_email_reschedule',
   noun: 'Email Reschedule',
   display: {
-    label: 'New Email Reschedule',
+    label: 'New Scheduled Email or Reschedule',
     description:
-      'Triggers when an existing scheduled email\'s send date is changed. Does not fire on initial scheduling.',
+      'Triggers when a scheduled email\'s send date is set or changed. Fires once when an email is first scheduled, and again each time the send date is updated.',
   },
   operation: {
     perform,
@@ -55,7 +34,6 @@ module.exports = {
       status: 'scheduled',
       creation_date: '2026-05-10T12:00:00Z',
       publish_date: '2026-05-20T15:00:00Z',
-      previous_publish_date: '2026-05-15T15:00:00Z',
       description: '',
       slug: 'my-scheduled-email',
     },
@@ -66,12 +44,7 @@ module.exports = {
       { key: 'body', label: 'Body', type: 'string' },
       { key: 'status', label: 'Status', type: 'string' },
       { key: 'creation_date', label: 'Creation Date', type: 'datetime' },
-      { key: 'publish_date', label: 'New Send Date', type: 'datetime' },
-      {
-        key: 'previous_publish_date',
-        label: 'Previous Send Date',
-        type: 'datetime',
-      },
+      { key: 'publish_date', label: 'Send Date', type: 'datetime' },
       { key: 'description', label: 'Description', type: 'string' },
       { key: 'slug', label: 'Slug', type: 'string' },
     ],
