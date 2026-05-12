@@ -3,6 +3,7 @@ const findSubscriber = require('./searches/findSubscriber');
 const createDraft = require('./creates/createDraft');
 const createUpdateSubscriber = require('./creates/createUpdateSubscriber');
 const newUnsubscribe = require('./triggers/newUnsubscribe');
+const newEmailReschedule = require('./triggers/newEmailReschedule');
 
 const addAuthHeader = (request, z, bundle) => {
   if (request.url.startsWith('https://api.buttondown.com/')) {
@@ -23,6 +24,7 @@ const App = {
 
   triggers: {
     [newUnsubscribe.key]: newUnsubscribe,
+    [newEmailReschedule.key]: newEmailReschedule,
   },
 
   searches: {
