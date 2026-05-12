@@ -47,6 +47,7 @@ module.exports = {
   },
   operation: {
     perform,
+    canPaginate: true,
     sample: {
       id: 'email_00000000-0000-0000-0000-000000000000:2026-05-20T15:00:00Z',
       email_id: 'email_00000000-0000-0000-0000-000000000000',
