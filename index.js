@@ -1,6 +1,7 @@
 const authentication = require('./authentication');
 const findSubscriber = require('./searches/findSubscriber');
 const createDraft = require('./creates/createDraft');
+const updateScheduledEmail = require('./creates/updateScheduledEmail');
 const createUpdateSubscriber = require('./creates/createUpdateSubscriber');
 const newUnsubscribe = require('./triggers/newUnsubscribe');
 const newEmailReschedule = require('./triggers/newEmailReschedule');
@@ -33,6 +34,7 @@ const App = {
 
   creates: {
     [createDraft.key]: createDraft,
+    [updateScheduledEmail.key]: updateScheduledEmail,
     [createUpdateSubscriber.key]: createUpdateSubscriber,
   },
 };
