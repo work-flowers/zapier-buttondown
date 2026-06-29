@@ -23,6 +23,24 @@ describe('creates', () => {
       expect(result.subject).toBe(bundle.inputData.subject);
     });
 
+    it('should set the canonical URL when provided', async () => {
+      const canonicalUrl = `https://example.com/post-${Date.now()}`;
+      const bundle = {
+        authData: { api_key: process.env.API_KEY },
+        inputData: {
+          subject: `Test Canonical ${Date.now()}`,
+          body: '# Hello\n\nThis is a test draft from Zapier.',
+          canonical_url: canonicalUrl,
+        },
+      };
+      const result = await appTester(
+        App.creates.create_draft.operation.perform,
+        bundle
+      );
+      expect(result).toHaveProperty('id');
+      expect(result.canonical_url).toBe(canonicalUrl);
+    });
+
     it('should rehost external markdown images', async () => {
       const externalUrl =
         'https://upload.wikimedia.org/wikipedia/commons/4/47/PNG_transparency_demonstration_1.png';

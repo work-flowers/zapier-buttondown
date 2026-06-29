@@ -25,6 +25,9 @@ const perform = async (z, bundle) => {
   if (bundle.inputData.slug) {
     body.slug = bundle.inputData.slug;
   }
+  if (bundle.inputData.canonical_url) {
+    body.canonical_url = bundle.inputData.canonical_url;
+  }
 
   const response = await z.request({
     url: 'https://api.buttondown.com/v1/emails',
@@ -89,6 +92,14 @@ module.exports = {
         required: false,
         helpText: 'URL slug for the email archive page (max 100 characters).',
       },
+      {
+        key: 'canonical_url',
+        label: 'Canonical URL',
+        type: 'string',
+        required: false,
+        helpText:
+          'The canonical URL for the email, used in the archive page\'s <link rel="canonical"> tag for SEO when the content is published elsewhere first.',
+      },
     ],
     sample: {
       id: 'email_00000000-0000-0000-0000-000000000000',
@@ -98,6 +109,7 @@ module.exports = {
       creation_date: '2026-04-06T12:00:00Z',
       description: '',
       slug: 'my-draft-email',
+      canonical_url: '',
     },
     outputFields: [
       { key: 'id', label: 'Email ID', type: 'string' },
@@ -107,6 +119,7 @@ module.exports = {
       { key: 'creation_date', label: 'Creation Date', type: 'datetime' },
       { key: 'description', label: 'Description', type: 'string' },
       { key: 'slug', label: 'Slug', type: 'string' },
+      { key: 'canonical_url', label: 'Canonical URL', type: 'string' },
     ],
   },
 };
