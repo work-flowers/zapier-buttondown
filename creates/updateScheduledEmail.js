@@ -30,6 +30,8 @@ const perform = async (z, bundle) => {
   if (bundle.inputData.description !== undefined)
     body.description = bundle.inputData.description;
   if (bundle.inputData.slug) body.slug = bundle.inputData.slug;
+  if (bundle.inputData.canonical_url)
+    body.canonical_url = bundle.inputData.canonical_url;
 
   const reschedule = Boolean(bundle.inputData.publish_date);
 
@@ -46,7 +48,7 @@ const perform = async (z, bundle) => {
 
   if (Object.keys(body).length === 0) {
     throw new Error(
-      'Nothing to update. Provide at least one field to change (Subject, Body, Send Date, Description, Slug, or Image).'
+      'Nothing to update. Provide at least one field to change (Subject, Body, Send Date, Description, Slug, Canonical URL, or Image).'
     );
   }
   const response = await patchEmail(z, email_id, body);
@@ -117,6 +119,14 @@ module.exports = {
         required: false,
         helpText: 'New URL slug for the archive page (max 100 characters).',
       },
+      {
+        key: 'canonical_url',
+        label: 'Canonical URL',
+        type: 'string',
+        required: false,
+        helpText:
+          'New canonical URL, used in the archive page\'s <link rel="canonical"> tag for SEO when the content is published elsewhere first.',
+      },
     ],
     sample: {
       id: 'email_00000000-0000-0000-0000-000000000000',
@@ -127,6 +137,7 @@ module.exports = {
       publish_date: '2026-05-20T15:00:00Z',
       description: '',
       slug: 'my-updated-email',
+      canonical_url: '',
     },
     outputFields: [
       { key: 'id', label: 'Email ID', type: 'string' },
@@ -137,6 +148,7 @@ module.exports = {
       { key: 'publish_date', label: 'Send Date', type: 'datetime' },
       { key: 'description', label: 'Description', type: 'string' },
       { key: 'slug', label: 'Slug', type: 'string' },
+      { key: 'canonical_url', label: 'Canonical URL', type: 'string' },
     ],
   },
 };
